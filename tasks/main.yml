@@ -1,0 +1,164 @@
+---
+# tasks file for elasticsearch
+- import_tasks: create_certs.yml
+  when: elasticsearch_certs_create
+  tags:
+  - never
+
+- name: disable selinux
+  selinux:
+    state: disabled
+  when: ansible_selinux.status != 'disabled'
+
+- name: reboot all machines
+  reboot:
+    msg: "Rebooting machines after disabling SELinux..."
+  when: ansible_selinux.status != 'disabled'
+  tags:
+  - never
+
+- name: create physical volume and volume group for elasticsearch
+  lvg:
+    vg: elasticsearch
+    pvs:
+    - /dev/disk/by-path/{{ elasticsearch_disk_path }}
+  when: elasticsearch_disk_path | length
+  tags:
+  - never
+
+- name: create logical volume for elasticsearch
+  lvol:
+    vg: elasticsearch
+    lv: elasticsearch
+    size: 100%FREE
+  when: elasticsearch_disk_path | length
+  tags:
+  - never
+
+- name: format elasticsearch logical volume with xfs filesystem
+  filesystem:
+    dev: /dev/mapper/elasticsearch-elasticsearch
+    fstype: xfs
+  when: elasticsearch_disk_path | length
+  tags:
+  - never
+
+- name: create elasticsearch data directory
+  file:
+    path: /var/lib/elasticsearch
+    state: directory
+
+- name: mount elasticsearch logical volume
+  mount:
+    path: /var/lib/elasticsearch
+    src: /dev/mapper/elasticsearch-elasticsearch
+    fstype: xfs
+    state: mounted
+  when: elasticsearch_disk_path | length
+
+- name: disable swap
+  command: /usr/sbin/swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: remove swapfile from /etc/fstab
+  mount:
+    path: swap
+    fstype: swap
+    state: absent
+
+- name: tuning kernel for elasticsearch (vm.swappiness)
+  sysctl:
+    name: vm.swappiness
+    value: 1
+    state: present
+    ignoreerrors: yes
+    sysctl_set: yes
+
+- name: add elasticsearch yum repo
+  yum_repository:
+    name: elasticsearch-{{ elasticsearch_version }}.x
+    description: Elasticsearch repository for {{ elasticsearch_version }}.x packages
+    baseurl: https://artifacts.elastic.co/packages/{{ elasticsearch_version }}.x/yum
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    gpgcheck: yes
+
+- name: install elasticsearch
+  yum:
+    name:
+    - elasticsearch-{{ elasticsearch_version }}.{{ elasticsearch_revision }}
+    state: present
+    allow_downgrade: yes
+
+- name: copy elasticsearch config
+  template:
+    src: etc_elasticsearch_elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    mode: 0640
+  tags:
+  - never
+
+- name: create elasticsearch tmp directory
+  file:
+    path: /usr/share/elasticsearch/tmp
+    state: directory
+    mode: 0770
+    group: elasticsearch
+
+- name: configure elasticsearch java options
+  lineinfile:
+    dest: /etc/sysconfig/elasticsearch
+    regexp: '#ES_JAVA_OPTS='
+    line: 'ES_JAVA_OPTS="-Djna.tmpdir=/usr/share/elasticsearch/tmp -Djava.net.preferIPv4Stack=true -Xms{{ elasticsearch_java_opts_maxram_mb / 2 }}m -Xmx{{ elasticsearch_java_opts_maxram_mb / 2 }}m -XX:MaxRAM={{ elasticsearch_java_opts_maxram_mb }}m"'
+    state: present
+
+- name: open firewall ports
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ item }}/tcp"
+    state: enabled
+  with_items:
+  - 9200
+  - 9300
+
+- name: copy certs to servers
+  copy:
+    src: "{{ elasticsearch_project_dir }}/elasticsearch/{{ item }}"
+    dest: /etc/elasticsearch/{{ item }}
+    mode: 0640
+    group: elasticsearch
+  with_items:
+  - elasticsearch-ca.pem
+  - elasticsearch.pem
+  - elasticsearch-key.pem
+
+- name: create bootstrap password for elastic user
+  command: /usr/bin/printf "{{ elasticsearch_elastic_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -x -s 'bootstrap.password'
+  no_log: true
+
+- name: start and enable elasticsearch
+  systemd:
+    daemon_reload: yes
+    name: elasticsearch
+    enabled: yes
+    state: started
+
+- name: pause playbook execution
+  pause:
+    prompt: "Waiting until elasticsearch cluster is bootstrapped..."
+    minutes: 1
+
+- name: create password for kibana user
+  uri:
+    url: https://{{ ansible_play_batch | first }}:9200/_security/user/kibana/_password
+    method: POST
+    body: '{ "password":"{{ elasticsearch_kibana_pass }}" }'
+    body_format: json
+    url_username: elastic
+    url_password: "{{ elasticsearch_elastic_pass }}"
+    validate_certs: no
+    headers:
+      Content-Type: "application/json"
+  delegate_to: "{{ ansible_play_batch | first }}"
+  run_once: true
+  when: elasticsearch_kibana_pass | length

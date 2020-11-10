@@ -1,0 +1,28 @@
+galaxy_info:
+  author: CaermeGlaeddyv
+  description: Linux / Kubernetes Administrator
+  license: Apache-2.0
+  min_ansible_version: 2.8.6
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  galaxy_tags:
+  - elastic
+  - elasticsearch
+  - elk
+  - elkstack
+  - kibana
+  - cluster
+  - database
+  - searchengine
+  - analyticsengine
+  - xpack
+  - cfssl
+  - cfssljson
+  - transparenthugepages
+  - nothp
+
+dependencies:
+- role: no_thp
+  when: elasticsearch_no_thp

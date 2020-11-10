@@ -1,0 +1,40 @@
+---
+- name: create elasticsearch directory
+  file:
+    path: "{{ elasticsearch_project_dir }}/elasticsearch"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+  become: no
+  tags:
+  - never
+
+- name: generate cfssl config files
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ elasticsearch_project_dir }}/elasticsearch/{{ item }}"
+  with_items:
+  - ca.json
+  - server.json
+  - elasticsearch.json
+  delegate_to: localhost
+  run_once: true
+  become: no
+  tags:
+  - never
+
+- name: generate elasticsearch certificates
+  shell: |
+    set -o pipefail \
+    && cfssl gencert -initca ca.json | cfssljson -bare elasticsearch-ca \
+    && cfssl gencert -ca elasticsearch-ca.pem -ca-key elasticsearch-ca-key.pem \
+    -config server.json -profile=server elasticsearch.json | cfssljson -bare elasticsearch
+  environment:
+    ANSIBLE_ELASTICSEARCH_WORKDIR: "{{ elasticsearch_project_dir }}/elasticsearch"
+  args:
+    chdir: $ANSIBLE_ELASTICSEARCH_WORKDIR
+  delegate_to: localhost
+  run_once: true
+  become: no
+  tags:
+  - never

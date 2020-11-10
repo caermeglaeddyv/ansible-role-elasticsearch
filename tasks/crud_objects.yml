@@ -1,0 +1,16 @@
+---
+- name: create elasticsearch users
+  uri:
+    url: https://{{ ansible_play_batch | first }}:9200/_security/user/{{ item.username }}
+    method: POST
+    body: '{{ item.body | to_json }}'
+    body_format: json
+    url_username: elastic
+    url_password: "{{ elasticsearch_elastic_pass }}"
+    validate_certs: no
+    headers:
+      Content-Type: "application/json"
+  delegate_to: "{{ ansible_play_batch | first }}"
+  run_once: true
+  with_items: "{{ elasticsearch_users }}"
+  when: elasticsearch_users | length

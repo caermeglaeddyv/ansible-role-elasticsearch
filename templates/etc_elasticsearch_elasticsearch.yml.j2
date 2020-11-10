@@ -1,0 +1,66 @@
+cluster:
+  name: {{ elasticsearch_cluster_name }}
+  initial_master_nodes:
+  {% for server in ansible_play_batch -%}
+  - {{ server }}
+  {% endfor %}
+
+discovery:
+  seed_hosts:
+  {% for server in ansible_play_batch -%}
+  - {{ server }}
+  {% endfor %}
+
+gateway:
+  expected_master_nodes: {{ ansible_play_batch | length }}
+  expected_data_nodes: {{ ansible_play_batch | length }}
+  recover_after_time: 5m
+  recover_after_master_nodes: {{ ansible_play_batch | length -1 }}
+  recover_after_data_nodes: {{ ansible_play_batch | length -1 }}
+
+processors: {{ ansible_processor_cores }}
+
+network:
+  host: {{ ansible_default_ipv4.address }}
+
+path:
+  data: /var/lib/elasticsearch
+  logs: /var/log/elasticsearch
+
+http:
+  max_initial_line_length: 16kb
+
+bootstrap:
+  memory_lock: false
+
+node:
+  ml: false
+
+xpack:
+  ml:
+    enabled: false
+  watcher:
+    enabled: false
+  monitoring:
+    enabled: false
+    collection.enabled: false
+  security:
+    enabled: true
+    authc:
+      accept_default_password: false
+    transport:
+      ssl:
+        enabled: true
+        supported_protocols: TLSv1.3
+        verification_mode: {{ elasticsearch_transport_ssl_verification_mode }}
+        key: /etc/elasticsearch/elasticsearch-key.pem
+        certificate: /etc/elasticsearch/elasticsearch.pem
+        certificate_authorities: [ "/etc/elasticsearch/elasticsearch-ca.pem" ]
+    http:
+      ssl:
+        enabled: true
+        supported_protocols: TLSv1.2
+        verification_mode: {{ elasticsearch_server_ssl_verification_mode }}
+        key: /etc/elasticsearch/elasticsearch-key.pem
+        certificate: /etc/elasticsearch/elasticsearch.pem
+        certificate_authorities: [ "/etc/elasticsearch/elasticsearch-ca.pem" ]
