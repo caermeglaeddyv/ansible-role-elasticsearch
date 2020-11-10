@@ -94,6 +94,7 @@
     src: etc_elasticsearch_elasticsearch.yml.j2
     dest: /etc/elasticsearch/elasticsearch.yml
     mode: 0640
+    group: elasticsearch
   tags:
   - never
 
@@ -108,7 +109,7 @@
   lineinfile:
     dest: /etc/sysconfig/elasticsearch
     regexp: '#ES_JAVA_OPTS='
-    line: 'ES_JAVA_OPTS="-Djna.tmpdir=/usr/share/elasticsearch/tmp -Djava.net.preferIPv4Stack=true -Xms{{ elasticsearch_java_opts_maxram_mb / 2 }}m -Xmx{{ elasticsearch_java_opts_maxram_mb / 2 }}m -XX:MaxRAM={{ elasticsearch_java_opts_maxram_mb }}m"'
+    line: 'ES_JAVA_OPTS="-Djna.tmpdir=/usr/share/elasticsearch/tmp -Djava.net.preferIPv4Stack=true -Xms{{ (elasticsearch_java_opts_maxram_mb / 2) | int }}m -Xmx{{ (elasticsearch_java_opts_maxram_mb / 2) | int }}m -XX:MaxRAM={{ elasticsearch_java_opts_maxram_mb }}m"'
     state: present
 
 - name: open firewall ports
@@ -133,8 +134,12 @@
   - elasticsearch-key.pem
 
 - name: create bootstrap password for elastic user
-  command: /usr/bin/printf "{{ elasticsearch_elastic_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -x -s 'bootstrap.password'
-  no_log: true
+  shell: |
+    set -o pipefail \
+    && /usr/bin/printf "{{ elasticsearch_elastic_pass }}" \
+    | /usr/share/elasticsearch/bin/elasticsearch-keystore add \
+    -x -s 'bootstrap.password'
+  no_log: false
 
 - name: start and enable elasticsearch
   systemd:
@@ -159,6 +164,7 @@
     validate_certs: no
     headers:
       Content-Type: "application/json"
+  no_log: false
   delegate_to: "{{ ansible_play_batch | first }}"
   run_once: true
   when: elasticsearch_kibana_pass | length
