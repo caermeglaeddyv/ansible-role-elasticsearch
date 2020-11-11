@@ -3,13 +3,13 @@ cluster:
   initial_master_nodes:
   {% for server in ansible_play_batch -%}
   - {{ server }}
-  {% endfor -%}
+  {% endfor %}
 
 discovery:
   seed_hosts:
   {% for server in ansible_play_batch -%}
   - {{ server }}
-  {% endfor -%}
+  {% endfor %}
 
 gateway:
   expected_master_nodes: {{ ansible_play_batch | length }}
