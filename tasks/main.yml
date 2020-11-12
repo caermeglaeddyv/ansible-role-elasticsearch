@@ -1,10 +1,5 @@
 ---
 # tasks file for elasticsearch
-- import_tasks: create_certs.yml
-  when: elasticsearch_certs_create
-  tags:
-  - never
-
 - name: disable selinux
   selinux:
     state: disabled

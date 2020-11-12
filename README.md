@@ -15,7 +15,7 @@ Requirements
 ------------
 
 This is not strict requirements and it may not work with other versions than tested ones.
-Anyway. feel yourself free to test by yourself, suggest addition of new functionality and contribute.
+Anyway. feel free to test by yourself, suggest addition of new functionality and contribute.
 
 Role is tested with:
 - Ansible version >= 2.8.6
@@ -23,7 +23,7 @@ Role is tested with:
 
 Currently supports installation of Elasticsearch versions >= 7.3.
 
-cfssl and cfssljson must be installed on localhost if elasticsearch_certs_create variable is set to True (default).
+cfssl and cfssljson must be installed on localhost if elasticsearch_cfssl variable is set to True (default).
 
 
 Role Variables
@@ -49,48 +49,7 @@ elasticsearch_project_name: test
 elasticsearch_project_dir: "{{ elasticsearch_project_name }}"
 
 # Use CFSSL to create elasticsearch cluster Root CA and self-signed certificates:
-elasticsearch_certs_create: true
-
-# Common name for elasticsearch Root CA:
-elasticsearch_certs_ca_cn: "elasticsearch root ca"
-
-# Key algorithm for elasticsearch Root CA:
-elasticsearch_certs_ca_key_algo: "rsa"
-
-# Key size for elasticsearch Root CA:
-elasticsearch_certs_ca_key_size: 4096
-
-# Distinguished names for elasticsearch Root CA:
-elasticsearch_certs_ca_names:
-- c: "Neverland"
-  l: "Rivia"
-  o: "Witchers"
-  ou: "Caer Morhen"
-
-# elasticsearch server certificate expiry in hours:
-elasticsearch_certs_server_expiry: "17520h"
-
-# Common name for elasticsearch server and peer certificate:
-elasticsearch_certs_server_cn: "elasticsearch server"
-
-# Key algorithm for elasticsearch server and peer certificate:
-elasticsearch_certs_server_key_algo: "rsa"
-
-# Key size for elasticsearch server and peer certificate:
-elasticsearch_certs_server_key_size: 2048
-
-# Distinguished names for elasticsearch server and peer certificate:
-elasticsearch_certs_server_names:
-- c: "Neverland"
-  l: "Rivia"
-  o: "Witchers"
-  ou: "Caer Morhen"
-
-# Hostnames, DNS names and/or IP addressed for which elasticsearch
-# server and peer certificate will be signed. If your server hostnames
-# and IP addressed are different from ones in inventory,
-# provide them manually using this variable:
-elasticsearch_certs_server_hosts: []
+elasticsearch_cfssl: true
 
 # Name of separate device in /dev/disk/by-path/ for elasticsearch storage:
 elasticsearch_disk_path: ""          # pci-0000:13:00.0-scsi-0:0:0:0
@@ -139,7 +98,7 @@ Dependencies
 
 If elasticsearch_no_thp variable set to True (default), installs no_thp role to permanently disable Transparent Huge Pages, which is strongly recommended if nodes RAM is not too high.
 
-cfssl and cfssljson must be installed on localhost if elasticsearch_certs_create variable is set to True (default).
+cfssl and cfssljson must be installed on localhost if elasticsearch_cfssl variable is set to True (default).
 
 
 Example Playbook

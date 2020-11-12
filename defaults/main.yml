@@ -18,48 +18,7 @@ elasticsearch_project_name: test
 elasticsearch_project_dir: "{{ elasticsearch_project_name }}"
 
 # Use CFSSL to create elasticsearch cluster Root CA and self-signed certificates:
-elasticsearch_certs_create: true
-
-# Common name for elasticsearch Root CA:
-elasticsearch_certs_ca_cn: "elasticsearch root ca"
-
-# Key algorithm for elasticsearch Root CA:
-elasticsearch_certs_ca_key_algo: "rsa"
-
-# Key size for elasticsearch Root CA:
-elasticsearch_certs_ca_key_size: 4096
-
-# Distinguished names for elasticsearch Root CA:
-elasticsearch_certs_ca_names:
-- c: "Neverland"
-  l: "Rivia"
-  o: "Witchers"
-  ou: "Caer Morhen"
-
-# elasticsearch server certificate expiry in hours:
-elasticsearch_certs_server_expiry: "17520h"
-
-# Common name for elasticsearch server and peer certificate:
-elasticsearch_certs_server_cn: "elasticsearch server"
-
-# Key algorithm for elasticsearch server and peer certificate:
-elasticsearch_certs_server_key_algo: "rsa"
-
-# Key size for elasticsearch server and peer certificate:
-elasticsearch_certs_server_key_size: 2048
-
-# Distinguished names for elasticsearch server and peer certificate:
-elasticsearch_certs_server_names:
-- c: "Neverland"
-  l: "Rivia"
-  o: "Witchers"
-  ou: "Caer Morhen"
-
-# Hostnames, DNS names and/or IP addressed for which elasticsearch
-# server and peer certificate will be signed. If your server hostnames
-# and IP addressed are different from ones in inventory,
-# provide them manually using this variable:
-elasticsearch_certs_server_hosts: []
+elasticsearch_cfssl: true
 
 # Name of separate device in /dev/disk/by-path/ for elasticsearch storage:
 elasticsearch_disk_path: ""          # pci-0000:13:00.0-scsi-0:0:0:0
