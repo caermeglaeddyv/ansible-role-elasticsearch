@@ -27,4 +27,4 @@ dependencies:
 - role: no_thp
   when: elasticsearch_no_thp
 - role: cfssl
-  when: mongodb_cfssl
+  when: elasticsearch_cfssl
