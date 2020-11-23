@@ -24,7 +24,7 @@ galaxy_info:
   - nothp
 
 dependencies:
-- role: caermeglaeddyv.no_thp
+- role: caermeglaeddyv.ansible_role_no_thp
   when: elasticsearch_no_thp
-- role: caermeglaeddyv.cfssl
+- role: caermeglaeddyv.ansible_role_cfssl
   when: elasticsearch_cfssl
