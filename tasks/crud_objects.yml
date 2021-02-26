@@ -10,6 +10,7 @@
     validate_certs: no
     headers:
       Content-Type: "application/json"
+  no_log: true
   delegate_to: "{{ ansible_play_batch | first }}"
   run_once: true
   with_items: "{{ elasticsearch_users }}"
